@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jobwatch"
+dynamic = ["version"]
+description = "Desktop app that watches Slurm jobs on your SSH servers and notifies you when they finish"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "GPL-3.0"}
+
+[project.urls]
+Homepage = "https://github.com/kr-ramesh/jobwatch"
+
+[project.scripts]
+jobwatch = "jobwatch:main"
+
+[tool.setuptools]
+py-modules = ["jobwatch"]
+
+[tool.setuptools.dynamic]
+version = {attr = "jobwatch.__version__"}

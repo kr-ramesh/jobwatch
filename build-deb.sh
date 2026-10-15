@@ -4,11 +4,11 @@
 set -euo pipefail
 
 # ---- settings
-VERSION="0.1.0"
 MAINTAINER="kr-ramesh <kramesh.tlw@gmail.com>"   # shown in the package details
 # ----
 
 cd "$(dirname "$0")"
+VERSION="$(sed -n 's/^__version__ = "\(.*\)"/\1/p' jobwatch.py)"   # bump __version__ in jobwatch.py
 PKG="jobwatch_${VERSION}_all"
 BUILD="$(mktemp -d)"
 trap 'rm -rf "$BUILD"' EXIT

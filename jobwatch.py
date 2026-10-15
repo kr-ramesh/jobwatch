@@ -20,6 +20,8 @@ are kept in ~/.config/jobwatch/state.json (override the folder with $JOBWATCH_HO
 """
 from __future__ import annotations
 
+__version__ = "0.1.0"
+
 import argparse
 import fcntl
 import fnmatch
@@ -787,6 +789,7 @@ def main():
     ap.add_argument("--no-window", action="store_true", help="just make sure the checker is running")
     ap.add_argument("--service", action="store_true", help="run the checker in this process (used at login)")
     ap.add_argument("--quit", action="store_true", help="stop the background checker")
+    ap.add_argument("--version", action="version", version="jobwatch " + __version__)
     a = ap.parse_args()
 
     if a.service:

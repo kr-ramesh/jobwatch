@@ -12,17 +12,23 @@ A desktop app that watches your jobs on remote servers and notifies you when the
 
 ## Install
 
-**Linux Mint / Ubuntu / Debian:** download `jobwatch_<version>_all.deb` from the [latest release](https://github.com/kr-ramesh/jobwatch/releases/latest) and double-click it, or run:
+**Linux (Mint, Ubuntu, Debian, others) and macOS.** Paste this into a terminal:
 
 ```
-sudo apt install ./jobwatch_0.1.0_all.deb
+curl -fsSL https://raw.githubusercontent.com/kr-ramesh/jobwatch/main/get.sh | bash
 ```
 
-Then open **jobwatch** from the app menu.
+On Mint, Ubuntu and Debian this installs the latest `.deb` with apt, so it asks for your password. On other Linux it installs for your user only, into `~/.local`. Then open **jobwatch** from your app menu, or run `jobwatch`. To update later, run the same command again.
 
-**Other Linux, or without sudo:** `./install.sh` installs it for your user only. `./install.sh --uninstall` removes it.
+**With pipx or pip:**
 
-**macOS:** `python3 jobwatch.py` opens the dashboard in your browser. Notifications use Notification Center.
+```
+pipx install git+https://github.com/kr-ramesh/jobwatch
+```
+
+or `pip install --user git+https://github.com/kr-ramesh/jobwatch`. Then run `jobwatch`. This route doesn't add an app-menu entry. Get pipx on Mint/Ubuntu with `sudo apt install pipx`. Newer Mint and Ubuntu block `pip install` into the system Python, so use pipx there.
+
+**By hand:** download `jobwatch_<version>_all.deb` from the [latest release](https://github.com/kr-ramesh/jobwatch/releases/latest) and double-click it. Or clone the repo and run `./install.sh` (`./install.sh --uninstall` removes it).
 
 ## Server requirements
 
@@ -62,7 +68,7 @@ The dashboard is served only on `127.0.0.1`. Job data stays on your machine, unl
 ./build-deb.sh        # writes dist/jobwatch_<version>_all.deb
 ```
 
-Bump `VERSION` at the top of `build-deb.sh` for each release.
+Bump `__version__` near the top of `jobwatch.py` for each release. The `.deb` and pip both read it from there.
 
 To update an installed copy: install the new `.deb` over the old one, then run `jobwatch --quit` and reopen jobwatch so the background checker runs the new version.
 
