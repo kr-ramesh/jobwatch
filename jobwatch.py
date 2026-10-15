@@ -915,7 +915,10 @@ tbody tr.sel td{background:color-mix(in srgb,var(--accent) 10%,transparent)}
 td.cb,th.cb{width:30px;padding-right:0}
 td.name{max-width:380px;overflow:hidden;text-overflow:ellipsis}
 td.dim{color:var(--muted)}
-.bell{color:var(--accent);margin-left:6px;font-size:12px}
+.bell{color:var(--accent);margin-left:6px}
+.ico{vertical-align:-2px}
+.wico{display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:var(--ok);color:#fff;font-size:10px;font-weight:700;margin-right:6px;vertical-align:1px}
+.wico.bad{background:var(--bad)}
 .empty{padding:26px;text-align:center;color:var(--muted)}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:550;padding:2px 9px 2px 8px;border-radius:99px;background:color-mix(in srgb,var(--c) 14%,transparent);color:var(--c)}
 .pill::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c)}
@@ -1029,6 +1032,7 @@ const $ = (s, el=document) => el.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ACTIVE = new Set(['RUNNING','PENDING','REQUEUED','SUSPENDED','COMPLETING','CONFIGURING','RESIZING','SIGNALING','STAGE_OUT','STOPPED','REQUEUE_FED','REQUEUE_HOLD','RESV_DEL_HOLD']);
 const GOOD = new Set(['COMPLETED','ENDED']);
+const BELL = '<svg class="ico" viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M8 1.5A4.5 4.5 0 0 0 3.5 6v2.4L2 11h12l-1.5-2.6V6A4.5 4.5 0 0 0 8 1.5zM6.2 12.3a1.9 1.9 0 0 0 3.6 0z"/></svg>';
 let S = null, lastSeq = null, stopped = false;
 const sel = new Map(), cards = new Map();
 let ui = {tabs:{}, collapsed:{}};
@@ -1106,7 +1110,7 @@ function renderWatches(){
       const chips = ms.slice(0, 80).map(([id, m]) => `<i class="${stateClass(m.state || '?')}" title="${esc(id)} ${esc(m.name)} — ${esc(m.state || '')}"></i>`).join('') +
                     (total > 80 ? `<span class="muted" style="font-size:11px">+${total-80}</span>` : '');
       return `<div class="card watch ${w.done ? 'done' : ''} ${bad ? 'failed' : ''}">
-        <div class="wtop"><span class="wname" title="${esc(w.name)}">${w.done ? (bad ? '⚠️ ' : '✅ ') : ''}${esc(w.name)}</span><span class="whost">${esc(w.host)}</span></div>
+        <div class="wtop"><span class="wname" title="${esc(w.name)}">${w.done ? `<span class="wico ${bad ? 'bad' : ''}">${bad ? '!' : '✓'}</span>` : ''}${esc(w.name)}</span><span class="whost">${esc(w.host)}</span></div>
         <button class="btn ghost x" data-unwatch="${esc(w.id)}" title="Stop watching">✕</button>
         <div class="bar"><span style="width:${total ? good/total*100 : 0}%;background:var(--ok)"></span><span style="width:${total ? bad/total*100 : 0}%;background:var(--bad)"></span></div>
         <div class="wmeta">${meta}</div>
@@ -1148,8 +1152,8 @@ function buildCard(name){
     <div class="host-body">
       <div class="tabs"><button class="tab" data-tab="active">Active<span class="n na"></span></button><button class="tab" data-tab="finished">Finished<span class="n nf"></span></button></div>
       <div class="toolbar">
-        <div class="grp"><span class="selinfo"></span><input type="text" class="wname" placeholder="name (optional)"><button class="btn primary small wsel" disabled>🔔 Notify when selected finish</button></div>
-        <div class="grp"><input type="text" class="wpat" placeholder="name pattern, e.g. sweep-*"><button class="btn small wpatb">Watch pattern</button><button class="btn small wall" title="Notify once nothing is left running or pending here">Notify when all finish</button></div>
+        <div class="grp"><span class="selinfo"></span><input type="text" class="wname" placeholder="name (optional)"><button class="btn primary small wsel" disabled>${BELL} Notify when selected finish</button></div>
+        <div class="grp"><input type="text" class="wpat" placeholder="pattern, e.g. sweep-*"><button class="btn small wpatb">Watch pattern</button><button class="btn small wall" title="Notify once nothing is left running or pending here">Notify when all finish</button></div>
       </div>
       <div class="tablewrap"><table><thead></thead><tbody></tbody></table></div>
     </div>`;
@@ -1220,7 +1224,7 @@ function updateCard(el, h){
     tbody.innerHTML = rows.length ? rows.map(j => `<tr data-id="${esc(j.id)}" class="${s.has(j.id) ? 'sel' : ''}">
         <td class="cb"><input type="checkbox" ${s.has(j.id) ? 'checked' : ''}></td>
         <td class="mono">${esc(j.id)}</td>
-        <td class="name" title="${esc(j.name)}">${esc(j.name)}${watched.has(baseId(j.id)) ? '<span class="bell" title="In a watch">🔔</span>' : ''}</td>
+        <td class="name" title="${esc(j.name)}">${esc(j.name)}${watched.has(baseId(j.id)) ? `<span class="bell" title="In a watch">${BELL}</span>` : ''}</td>
         <td>${pill(j.state)}</td><td class="mono">${esc(j.elapsed)}</td>` +
         (slurm ? `<td class="mono dim">${esc(j.limit)}</td><td class="dim">${esc(j.where)}</td><td class="dim">${esc(j.partition)}</td>` : '') + '</tr>').join('')
       : `<tr><td colspan="8" class="empty">${h.last_ok ? 'Nothing running or pending.' : '…'}</td></tr>`;

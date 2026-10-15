@@ -1,5 +1,12 @@
 # jobwatch
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/screenshot-dark.png">
+  <img alt="The jobwatch window: two servers with their running and pending jobs, three watches, and recent notifications" src="docs/screenshot-light.png">
+</picture>
+
+<sub>Demo data.</sub>
+
 A desktop app that watches your jobs on remote servers and notifies you when they finish.
 
 - Lists the servers in your `~/.ssh/config`. You tick the ones to watch.
