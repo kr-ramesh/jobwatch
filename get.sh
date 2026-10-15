@@ -35,7 +35,7 @@ if [[ "$(uname)" == "Linux" ]] && command -v apt-get >/dev/null && [[ "$DEB_URL"
   curl -fsSL -o "$TMP/jobwatch.deb" "$DEB_URL"
   chmod 644 "$TMP/jobwatch.deb"
   say "Installing (you may be asked for your password)…"
-  sudo apt-get install -y "$TMP/jobwatch.deb"
+  sudo apt-get install -y --reinstall "$TMP/jobwatch.deb"
   BIN=jobwatch
 elif [[ "$(uname)" == "Linux" ]]; then
   say "Downloading jobwatch $TAG…"
