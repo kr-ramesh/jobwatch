@@ -20,7 +20,7 @@ are kept in ~/.config/jobwatch/state.json (override the folder with $JOBWATCH_HO
 """
 from __future__ import annotations
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 import argparse
 import fcntl
@@ -502,7 +502,8 @@ class App:
             return {"now": time.time(), "next_poll": self.next_poll, "settings": self.settings,
                     "enabled": self.enabled, "hosts": [self.host(n).view() for n in self.enabled],
                     "watches": self.watches, "events": self.events[-100:],
-                    "app": {"linux": sys.platform.startswith("linux"), "autostart": AUTOSTART_FILE.exists()}}
+                    "app": {"linux": sys.platform.startswith("linux"), "autostart": AUTOSTART_FILE.exists(),
+                            "version": __version__}}
 
     def api_hosts_list(self, _=None):
         with self.lock:
@@ -649,7 +650,7 @@ class Handler(BaseHTTPRequestHandler):
         if path == "/api/hosts":
             return self._send(200, json.dumps(self.app.api_hosts_list()))
         if path == "/api/ping":
-            return self._send(200, '"jobwatch"')
+            return self._send(200, json.dumps({"app": "jobwatch", "version": __version__}))
         self._send(404, '"not found"')
 
     def do_POST(self):
@@ -722,7 +723,8 @@ def running_service():
     try:
         info = json.loads(RUN_FILE.read_text())
         info["url"] = "http://127.0.0.1:%d/" % info["port"]
-        urllib.request.urlopen(info["url"] + "api/ping", timeout=2).read()
+        ping = json.loads(urllib.request.urlopen(info["url"] + "api/ping", timeout=2).read())
+        info["version"] = ping.get("version") if isinstance(ping, dict) else None  # None: older than 0.1.2
         return info
     except Exception:
         return None
@@ -802,6 +804,15 @@ def main():
         else:
             print("jobwatch is not running")
         return
+    if info and info.get("version") != __version__:
+        # A checker from another version is still running (e.g. after an update); it serves the
+        # window, so replace it or the window would keep showing the old version.
+        call_service(info, "/api/quit", {})
+        for _ in range(100):
+            time.sleep(0.1)
+            if not running_service():
+                break
+        info = None
     info = info or start_service(a.port)
     if a.hosts:
         current = json.loads(urllib.request.urlopen(info["url"] + "api/hosts", timeout=10).read())
@@ -1018,6 +1029,7 @@ aside .card{padding:4px 0}
         <h4>App</h4>
         <label class="check" id="autostartRow"><input type="checkbox" id="autostart"><span>Check in the background from login<div class="hint">Notifications arrive even if you never open this window.</div></span></label>
         <div class="hint">Closing this window keeps checking in the background.</div>
+        <div class="hint" id="versionLine" style="margin-top:14px"></div>
         <div class="row"><button class="btn" id="quitBtn">Stop background checking</button></div>
       </div>
     </div>
@@ -1269,6 +1281,7 @@ async function openDrawer(){
   $('#notifyEvery').checked = st.notify_every_job; $('#desktopNotif').checked = st.desktop_notifications;
   $('#browserNotif').checked = st.browser_notifications; $('#ntfyTopic').value = st.ntfy_topic;
   $('#patterns').value = st.process_patterns.join(', '); $('#excludes').value = st.process_exclude.join(', ');
+  $('#versionLine').textContent = 'jobwatch ' + S.app.version;
   $('#autostartRow').style.display = S.app.linux ? '' : 'none'; $('#autostart').checked = S.app.autostart;
   $('#drawerWrap').classList.add('open');
 }

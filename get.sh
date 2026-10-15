@@ -36,7 +36,17 @@ if [[ "$(uname)" == "Linux" ]] && command -v apt-get >/dev/null && [[ "$DEB_URL"
   chmod 644 "$TMP/jobwatch.deb"
   say "Installing (you may be asked for your password)…"
   sudo apt-get install -y --reinstall "$TMP/jobwatch.deb"
-  BIN=jobwatch
+  BIN=/usr/bin/jobwatch
+  # A per-user copy from install.sh would shadow the package (it comes first on PATH and in the menu).
+  removed=false
+  for f in "$HOME/.local/bin/jobwatch" "$HOME/.local/share/applications/jobwatch.desktop"; do
+    if [[ -e "$f" ]] && grep -q -i jobwatch "$f" 2>/dev/null; then rm -f "$f"; removed=true; fi
+  done
+  if $removed; then rm -f "$HOME/.local/share/icons/hicolor/scalable/apps/jobwatch.svg"; fi
+  if $removed; then
+    say "Removed an older per-user copy of jobwatch from ~/.local that was hiding this one."
+    echo "If a terminal then says 'No such file or directory' for jobwatch, open a new terminal (or run: hash -r)."
+  fi
 elif [[ "$(uname)" == "Linux" ]]; then
   say "Downloading jobwatch $TAG…"
   curl -fsSL "https://github.com/$REPO/archive/refs/tags/$TAG.tar.gz" | tar xz -C "$TMP" --strip-components=1
@@ -56,7 +66,7 @@ fi
 echo
 say "jobwatch $TAG is installed."
 if [[ "$(uname)" == "Linux" ]]; then
-  echo "Open it from your app menu (search \"jobwatch\"), or run: $BIN"
+  echo "Open it from your app menu (search \"jobwatch\"), or run: $([[ "$BIN" == /usr/bin/jobwatch ]] && echo jobwatch || echo "$BIN")"
 else
   echo "Run it with: $BIN"
 fi
