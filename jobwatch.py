@@ -357,6 +357,7 @@ class App:
 
     def loop(self):
         while True:
+            self.drop_hosts_gone_from_config()
             with self.lock:
                 names, interval = list(self.enabled), self.settings["poll_seconds"]
             list(self.pool.map(self.poll_host, names))
@@ -386,6 +387,8 @@ class App:
             error = "%s: %s" % (type(e).__name__, e)
         outbox = []
         with self.lock:
+            if name not in self.enabled:
+                return  # removed while this check was running
             h = self.host(name)
             h.polling, h.last_poll = False, time.time()
             if result is None:
@@ -516,10 +519,42 @@ class App:
             if not HOST_RE.match(n) or n.startswith("-"):
                 raise ValueError("invalid host name: %r" % n)
         with self.lock:
+            removed = [n for n in self.enabled if n not in names]
             self.custom_hosts = list(dict.fromkeys(custom))
             self.enabled = list(dict.fromkeys(names))
+        for n in removed:
+            self.forget_host(n)
         self.save()
         self.wake.set()
+
+    def forget_host(self, name):
+        """A server was removed: drop its jobs, watches and cached ssh setup, and close our shared connection."""
+        with self.lock:
+            self.hosts.pop(name, None)
+            self.watches = [w for w in self.watches if w["host"] != name]
+            cmd = self.ssh_cmds.pop(name, None)
+        ctl = [o for o in (cmd or []) if o.startswith("ControlPath=%s/" % CTL_DIR)]
+        if ctl:  # only our own connection; never one the user's ssh config set up
+            try:
+                subprocess.run(["ssh", "-o", ctl[0], "-O", "exit", name], capture_output=True, timeout=10)
+            except Exception:
+                pass
+
+    def drop_hosts_gone_from_config(self):
+        """Servers deleted from ~/.ssh/config stop being watched (custom-added ones and "local" stay)."""
+        cfg = Path.home() / ".ssh" / "config"
+        if cfg.exists() and not os.access(str(cfg), os.R_OK):
+            return  # can't read it right now; don't mistake that for "everything was removed"
+        known = set([LOCAL] + ssh_config_hosts() + self.custom_hosts)
+        with self.lock:
+            gone = [n for n in self.enabled if n not in known]
+            self.enabled = [n for n in self.enabled if n in known]
+        for n in gone:
+            print("%s is no longer in ~/.ssh/config; stopped watching it" % n, flush=True)
+            self.forget_host(n)
+        if gone:
+            _hosts_cache[0] = 0.0
+            self.save()
 
     def api_settings(self, body):
         with self.lock:
