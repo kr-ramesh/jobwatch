@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=jobwatch
+GenericName=Job Monitor
+Comment=Watch Slurm jobs and processes on your SSH servers and get notified when they finish
+Exec=jobwatch
+Icon=jobwatch
+Terminal=false
+Categories=Development;Utility;Monitor;
+Keywords=slurm;ssh;jobs;cluster;gpu;notify;
+StartupWMClass=jobwatch
